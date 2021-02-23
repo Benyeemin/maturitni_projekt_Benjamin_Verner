@@ -1,52 +1,96 @@
+from kivy.app import App
+from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
+import time
+import cv2, pytesseract, sqlite3
+from contextlib import closing
+from kivy.logger import Logger
 import cv2, pytesseract, sqlite3
 from contextlib import closing
 
-book_number = 0
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+Builder.load_string('''
+<CameraClick>:
+    orientation: 'vertical'
+    Camera:
+        id: camera
+        resolution: (640, 480)
+        play: True
+    Button:
+        text: 'Read from image'
+        size_hint_y: None
+        height: '48dp'
+        on_press: root.capture()
+    Button:
+        text: 'Scan barcode'
+        size_hint_y: None
+        height: '48dp'
+''')
+
+class CameraClick(BoxLayout):
+    def capture(self):
+        camera = self.ids['camera']
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        camera.export_to_png("IMG_{}.png".format(timestr))
+        read_from_image(camera)
+
+
+class TestCamera(App):
+
+    def build(self):
+        return CameraClick()
+
+def read_from_image(camera):
+    book_number = 0
+    image = cv2.imread('.jpg')
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+    img = cv2.Canny(img, 10, 250)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    for contour in contours:
+        peri = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
+        if len(approx) == 4:
+            cv2.drawContours(image, contour, -1, (0, 255, 0), 10)
+            x_max = 0
+            x_min = 10 ** 6
+            y_max = 0
+            y_min = 10 ** 6
+            for x in range(len(contour)):
+                if contour[x][0][0] < y_min:
+                    y_min = contour[x][0][0]
+                if contour[x][0][0] > y_max:
+                    y_max = contour[x][0][0]
+                if contour[x][0][1] < x_min:
+                    x_min = contour[x][0][1]
+                if contour[x][0][1] > x_max:
+                    x_max = contour[x][0][1]
+            print(x_min, x_max, y_min, y_max)
+            book = image[y_min:y_max, x_min:x_max]
+
+            book = cv2.resize(book, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+            text = pytesseract.image_to_string(book).split()
+
+            for i in range(len(text)):
+                text[i] = remove_non_ascii(text[i])
+
+            conn = sqlite3.connect("books.db", isolation_level=None)
+            conn.row_factory = sqlite3.Row
+            with closing(conn.cursor()) as cursor:
+                cursor.execute()
+                formatted_result = 0
+            print("Book ", book_number, ":", formatted_result)
+            book_number += 1
+    if book_number == 0:
+        Logger.exception('0 books found. Please try to adjust your background.')
 
 
 def remove_non_ascii(text):
     return ''.join([i if ord(i) < 128 else '_' for i in text])
 
-image = cv2.imread('3.jpg')
-img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-img = cv2.GaussianBlur(img, (3,3), 0)
-img = cv2.Canny(img, 10, 250)
-
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
-img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
-
-contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-for contour in contours:
-    peri = cv2.arcLength(contour, True)
-    approx = cv2.approxPolyDP(contour, 0.02 * peri, True)
-    if len(approx) == 4:
-        cv2.drawContours(image, contour, -1, (0,255,0), 10)
-        x_max = 0
-        x_min = 10**6
-        y_max = 0
-        y_min = 10**6
-        for x in range(len(contour)):
-            if contour[x][0][0] < y_min:
-                y_min = contour[x][0][0]
-            if contour[x][0][0] > y_max:
-                y_max = contour[x][0][0]
-            if contour[x][0][1] < x_min:
-                x_min = contour[x][0][1]
-            if contour[x][0][1] > x_max:
-                x_max = contour[x][0][1]
-        print(x_min, x_max, y_min, y_max)
-        book = image[y_min:y_max, x_min:x_max]
-
-        book = cv2.resize(book, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        text = pytesseract.image_to_string(book).split()
-
-        for i in range(len(text)):
-            text[i] = remove_non_ascii(text[i])
-
-        conn = sqlite3.connect("books.db", isolation_level=None)
-        conn.row_factory = sqlite3.Row
-        with closing(conn.cursor()) as cursor:
-            cursor.execute()
-            formatted_result = 0
-        print("Book ", book_number, ":", formatted_result)
+TestCamera().run()
