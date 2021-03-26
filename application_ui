@@ -9,6 +9,8 @@ import image_processing
 import information_fetcher
 import method1_SQL as sqlsearch
 import method2_fulltext_search as fulltextsearch
+from jnius import autoclass
+import Cython
 
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
@@ -21,7 +23,7 @@ Builder.load_string('''
             resolution: (640, 480)
             play: True
         Button:
-            text: 'Read from image'
+            text: 'Read from book covers'
             size_hint_y: None
             height: '48dp'
             on_press:
@@ -93,6 +95,7 @@ class Application(App):
         sm.add_widget(FinalScreen(name='FinalScreen'))
         return sm
 
+
 def read_from_image():
     FinalScreen.output = ''
     book_number = 0
@@ -100,11 +103,11 @@ def read_from_image():
     for text in text_list:
         if len(text_list) > 0:
             book_number += 1
-            book_title, book_author = fulltextsearch.title_search(text)
+            book_title, book_author = sqlsearch.search(text)
             string = information_fetcher.info_from_image(book_title, book_author, book_number)
             FinalScreen.output += '\n' + string
     if book_number == 0:
-        FinalScreen.output = '0 books found. Please try to adjust your background.'
+        FinalScreen.output = '0 books found. Please recapture the image.'
 
 def read_from_barcode():
     FinalScreen.output = ''
