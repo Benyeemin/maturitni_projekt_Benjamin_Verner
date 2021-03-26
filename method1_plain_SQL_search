@@ -1,42 +1,44 @@
-import sqlite3
+import psycopg2
 from contextlib import closing
 
-def remove_non_ascii(text):
-    return ''.join([i if ord(i) < 128 else '_' for i in text])
-
 def search(text):
-    for i in range(len(text)):
-        text[i] = remove_non_ascii(text[i])
+    for word in text:
+        word = ''.join([i if ord(i) < 128 else '_' for i in word])
 
     command = "select name, key"
-    number = 0
+    number = len(text)
     order_by = 'w1'
-    for number_of_cases in range(number + 2):
-        if number_of_cases > 1:
-            order_by = order_by + '+w' + str(number_of_cases)
+    for number_of_cases in range(2, number + 1):
+        order_by = order_by + '+w' + str(number_of_cases)
+    number = 0
     for word in text:
         number += 1
         command = command + ", case when name like '%" + word + "%' then 0 else 1 end as w" + str(number)
     command = command + ' from authors order by ' + order_by + ' limit 1;'
-    conn = sqlite3.connect("authors.db", isolation_level=None)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(host="10.0.1.20", user="postgres", password="hujaja", database="hujaja")
     with closing(conn.cursor()) as cursor:
-        for row in cursor.execute(command):
-            author_info = [row['name'], row['key']]
+        cursor.execute(command)
+        author_key = cursor.fetchall()['key']
 
     command = 'select title, main_author'
     number = 0
     for word in text:
         number += 1
         command = command + ", case when title like '%" + word + "%' then 0 else 1 end as w" + str(number)
-    order_by = 'w1'
-    for number_of_cases in range(number + 2):
-        if number_of_cases > 1:
-            order_by = order_by + '+w' + str(number_of_cases)
     number += 1
-    command = command + ", case when main_author='" + author_info[1] + "' then 0 else " + str(number//3) + ' end as w' + str(number) + ' from works order by ' + order_by + ' limit 1;'
-    conn = sqlite3.connect("books.db", isolation_level=None)
-    conn.row_factory = sqlite3.Row
+    order_by = order_by + '+w' + str(number)
+    command = command + ", case when main_author='" + author_key + "' then 0 else " + str(number//3) + ' end as w' + str(number) + ' from works order by ' + order_by + ' limit 1;'
+    conn = psycopg2.connect(host="10.0.1.20", user="postgres", password="hujaja", database="hujaja")
     with closing(conn.cursor()) as cursor:
-        for row in cursor.execute(command):
-            book_info = [row['title'], row['main_author']]
+        cursor.execute(command)
+        book_info = cursor.fetchall()
+        book_title = book_info['title']
+        author_key = book_info['main_author']
+
+    command = "'select name from authors where key='" + author_key + "' limit 1;"
+    conn = psycopg2.connect(host="10.0.1.20", user="postgres", password="hujaja", database="hujaja")
+    with closing(conn.cursor()) as cursor:
+        cursor.execute(command)
+        book_author = cursor.fetchall()
+
+    return book_title, book_author
