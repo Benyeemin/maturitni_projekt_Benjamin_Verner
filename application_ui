@@ -7,16 +7,20 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.clipboard import Clipboard
 import image_processing
 import information_fetcher
+import detect
 import method1_SQL as sqlsearch
 from pathlib import Path
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.floatlayout import FloatLayout
+from nltk.corpus import wordnet
 
 if getattr(sys, 'frozen', False):
     TesseractPath = Path(sys._MEIPASS)/'tesseract'/'tesseract.exe'
+    OUTPUT_DIR=Path(sys._MEIPASS)
 else:
     TesseractPath = Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
+    OUTPUT_DIR=Path(__file__).parent
 
 pytesseract.pytesseract.tesseract_cmd = str(TesseractPath)
 
@@ -87,6 +91,7 @@ Builder.load_string('''
         orientation: 'vertical'
         Label:
             id: output
+            text_size: self.width, None
         Button:
             text: 'Copy to clipboard'
             size_hint_y: None
@@ -122,12 +127,8 @@ class MainScreen(Screen):
     def capture(self):
         camera = self.ids['camera']
         MainScreen.img_name = time.strftime("%Y%m%d_%H%M%S")
-        camera.export_to_png(f"IMG_{self.img_name}.png")
-        if getattr(sys, 'frozen', False):
-            MainScreen.img_path = Path(sys._MEIPASS).parent/str(self.img_name)
-            print(MainScreen.img_path)
-        else:
-            MainScreen.img_path = Path(self.img_name)
+        MainScreen.img_path = str(OUTPUT_DIR / f"IMG_{self.img_name}.png")
+        camera.export_to_png(MainScreen.img_path)
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
@@ -137,7 +138,7 @@ class MainScreen(Screen):
 
     def load(self, path, filename):
         try:
-            MainScreen.img_path = str(filename[0])
+            MainScreen.img_path = str(Path(str(path)) / str(filename[0]))
         except:
             pass
         self.dismiss_popup()
@@ -145,18 +146,26 @@ class MainScreen(Screen):
     def read_from_image(self):
         FinalScreen.output = ''
         book_number = 0
-        text_list = image_processing.find_books(MainScreen.img_path)
+        #detection using cv2 : text_list = image_processing.find_books(MainScreen.img_path)
+        text_list = detect.find_books(MainScreen.img_path)
         if text_list is not None:
+            print(text_list)
             for text in text_list:
-                if len(text_list) > 0:
+                if len(text) > 0:
                     book_number += 1
                     book_title, book_author = sqlsearch.search(text)
-                    string = information_fetcher.info_from_image(book_title, book_author, book_number)
-                    FinalScreen.output += '\n' + string
+                    if book_title is not None:
+                        string = information_fetcher.info_from_image(book_title, book_author, book_number)
+                        FinalScreen.output += '\n' + string
+                    else:
+                        FinalScreen.output = 'Server connection error: check your internet connection.'
+                        self.final_screen.ids.output.text = FinalScreen.output
+                        return
             if book_number == 0:
                 FinalScreen.output = '0 books found.'
         else:
             FinalScreen.output = 'Invalid file.'
+        self.final_screen.ids.output.text = FinalScreen.output
 
     def read_from_barcode(self):
         FinalScreen.output = ''
