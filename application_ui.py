@@ -92,7 +92,13 @@ Builder.load_string('''
         orientation: 'vertical'
         Label:
             id: output
+            halign: 'center'
             text_size: self.width, None
+        Button:
+            text: 'Show next book'
+            size_hint_y: None
+            height: '48dp'
+            on_release: root.next_book()
         Button:
             text: 'Copy to clipboard'
             size_hint_y: None
@@ -108,6 +114,17 @@ Builder.load_string('''
             size_hint_y: None
             height: '48dp'
             on_release: app.stop()
+    BoxLayout:
+        Button:
+            text: 'previous book'
+            size_hint_y: None
+            height: '48dp'
+            on_release: root.previous_book()
+        Button:
+            text: 'next book'
+            size_hint_y: None
+            height: '48dp'
+            on_release: root.next_book()
 ''')
 
 class LoadDialog(FloatLayout):
@@ -145,49 +162,61 @@ class MainScreen(Screen):
         self.dismiss_popup()
 
     def read_from_image(self):
-        FinalScreen.output = ''
+        FinalScreen.output = []
         book_number = 0
         #detection using cv2 : text_list = image_processing.find_books(MainScreen.img_path)
         text_list = detect.find_books(MainScreen.img_path)
         if text_list is not None:
-            print(text_list)
             for text in text_list:
                 if len(text) > 0:
                     book_number += 1
                     book_title, book_author = sqlsearch.search(text)
                     if book_title is not None:
                         string = information_fetcher.info_from_image(book_title, book_author, book_number)
-                        FinalScreen.output += '\n' + string
+                        FinalScreen.output.append('\n' + string)
                     else:
-                        FinalScreen.output = 'Server connection error: check your internet connection.'
-                        self.final_screen.ids.output.text = FinalScreen.output
+                        FinalScreen.output.append('Server connection error: check your internet connection.')
+                        self.final_screen.ids.output.text = FinalScreen.output[0]
                         return
             if book_number == 0:
-                FinalScreen.output = '0 books found.'
+                FinalScreen.output.append('0 books found.')
         else:
-            FinalScreen.output = 'Invalid file.'
-        self.final_screen.ids.output.text = FinalScreen.output
+            FinalScreen.output.append('Invalid file.')
+        self.final_screen.ids.output.text = FinalScreen.output[0]
 
     def read_from_barcode(self):
-        FinalScreen.output = ''
+        FinalScreen.output = []
         book_number = 0
         barcodes = image_processing.find_barcodes(MainScreen.img_path)
         if barcodes is not None:
             for barcode in barcodes:
                 book_number += 1
                 string = information_fetcher.info_from_barcode(barcode, book_number)
-                FinalScreen.output += '\n' + string
+                FinalScreen.output.append('\n' + string)
             if book_number == 0:
-                FinalScreen.output = '0 barcodes found.'
+                FinalScreen.output.append('0 barcodes found.')
         else:
-            FinalScreen.output = 'Invalid file.'
-        self.final_screen.ids.output.text = FinalScreen.output
+            FinalScreen.output.append('Invalid file.')
+        self.final_screen.ids.output.text = FinalScreen.output[0]
 
 class FinalScreen(Screen):
-    output = ''
+    output = []
+    book_number = 0
+    current_book = 1
 
     def copy_to_clipboard(self):
-        Clipboard.copy(self.output)
+        Clipboard.copy(self.output[self.current_book-1])
+
+    def next_book(self):
+        if self.current_book < self.book_number:
+            FinalScreen.current_book += 1
+            self.ids.output.text = self.output[self.current_book-1]
+
+    def previous_book(self):
+        if self.current_book != 1:
+            FinalScreen.current_book -= 1
+            self.ids.output.text = self.output[self.current_book-1]
+
 
 class Application(App):
     def build(self):
