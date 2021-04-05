@@ -163,22 +163,22 @@ class MainScreen(Screen):
 
     def read_from_image(self):
         FinalScreen.output = []
-        book_number = 0
+        FinalScreen.book_number = 0
         #detection using cv2 : text_list = image_processing.find_books(MainScreen.img_path)
         text_list = detect.find_books(MainScreen.img_path)
         if text_list is not None:
             for text in text_list:
                 if len(text) > 0:
-                    book_number += 1
+                    FinalScreen.book_number += 1
                     book_title, book_author = sqlsearch.search(text)
                     if book_title is not None:
-                        string = information_fetcher.info_from_image(book_title, book_author, book_number)
+                        string = information_fetcher.info_from_image(book_title, book_author, FinalScreen.book_number)
                         FinalScreen.output.append('\n' + string)
                     else:
                         FinalScreen.output.append('Server connection error: check your internet connection.')
                         self.final_screen.ids.output.text = FinalScreen.output[0]
                         return
-            if book_number == 0:
+            if FinalScreen.book_number == 0:
                 FinalScreen.output.append('0 books found.')
         else:
             FinalScreen.output.append('Invalid file.')
@@ -186,14 +186,14 @@ class MainScreen(Screen):
 
     def read_from_barcode(self):
         FinalScreen.output = []
-        book_number = 0
+        FinalScreen.book_number = 0
         barcodes = image_processing.find_barcodes(MainScreen.img_path)
         if barcodes is not None:
             for barcode in barcodes:
-                book_number += 1
-                string = information_fetcher.info_from_barcode(barcode, book_number)
+                FinalScreen.book_number += 1
+                string = information_fetcher.info_from_barcode(barcode, FinalScreen.book_number)
                 FinalScreen.output.append('\n' + string)
-            if book_number == 0:
+            if FinalScreen.book_number == 0:
                 FinalScreen.output.append('0 barcodes found.')
         else:
             FinalScreen.output.append('Invalid file.')
