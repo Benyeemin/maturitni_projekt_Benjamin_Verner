@@ -15,9 +15,11 @@ if getattr(sys, 'frozen', False):
         pytesseract.pytesseract.tesseract_cmd = str(Path(sys._MEIPASS)/'tesseract'/'tesseract.exe')
     elif os.name == 'posix':
         pytesseract.pytesseract.tesseract_cmd = str(Path(sys._MEIPASS) / 'tesseract' / 'tesseract')
+    YOLOV_MODEL = str(Path(sys._MEIPASS)/'yolov4-416')
 else:
     if os.name == 'nt':
         pytesseract.pytesseract.tesseract_cmd = str(Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe'))
+    YOLOV_MODEL = str(Path(__file__).parent / 'yolov4-416')
 
 def find_books(image_path):
     try:
@@ -34,7 +36,7 @@ def find_books(image_path):
         images_data.append(image_data)
         images_data = np.asarray(images_data).astype(np.float32)
 
-        saved_model_loaded = tf.saved_model.load('./yolov4-416', tags=[tag_constants.SERVING])
+        saved_model_loaded = tf.saved_model.load(YOLOV_MODEL, tags=[tag_constants.SERVING])
         infer = saved_model_loaded.signatures['serving_default']
         batch_data = tf.constant(images_data)
         pred_bbox = infer(batch_data)
