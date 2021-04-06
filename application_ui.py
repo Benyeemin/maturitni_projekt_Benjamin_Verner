@@ -1,12 +1,14 @@
-import pytesseract, time, sys
+import time, sys
+from pathlib import Path
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.clipboard import Clipboard
-from pathlib import Path
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.floatlayout import FloatLayout
+
 import image_processing
 import information_fetcher
 import detect
@@ -14,13 +16,9 @@ import method1_SQL as sqlsearch
 import barcode_finder
 
 if getattr(sys, 'frozen', False):
-    TesseractPath = Path(sys._MEIPASS)/'tesseract'/'tesseract.exe'
     OUTPUT_DIR=Path(sys._MEIPASS)
 else:
-    TesseractPath = Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
     OUTPUT_DIR=Path(__file__).parent
-
-pytesseract.pytesseract.tesseract_cmd = str(TesseractPath)
 
 Builder.load_string('''
 <MainScreen>:

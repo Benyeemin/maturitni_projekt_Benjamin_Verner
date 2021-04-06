@@ -2,12 +2,22 @@
 Code taken and adapted from YOLOV4 examples.
 """
 import tensorflow as tf
-import pytesseract, cv2
+import pytesseract, cv2, sys, os
+from pathlib import Path
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 if len(physical_devices) > 0:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 from tensorflow.python.saved_model import tag_constants
 import numpy as np
+
+if getattr(sys, 'frozen', False):
+    if os.name == 'nt':
+        pytesseract.pytesseract.tesseract_cmd = str(Path(sys._MEIPASS)/'tesseract'/'tesseract.exe')
+    elif os.name == 'posix':
+        pytesseract.pytesseract.tesseract_cmd = str(Path(sys._MEIPASS) / 'tesseract' / 'tesseract')
+else:
+    if os.name == 'nt':
+        pytesseract.pytesseract.tesseract_cmd = str(Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe'))
 
 def find_books(image_path):
     try:
