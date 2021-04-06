@@ -1,0 +1,45 @@
+--- a/./venv/lib/python3.8/site-packages/kivy/core/camera/camera_opencv.py
++++ b/./venv/lib/python3.8/site-packages/kivy/core/camera/camera_opencv.py
+@@ -57,6 +57,7 @@ class CameraOpenCV(CameraBase):
+     Implementation of CameraBase using OpenCV
+     '''
+     _update_ev = None
++    _DEVICE_CACHE = {}
+ 
+     def __init__(self, **kwargs):
+         # we will need it, because constants have
+@@ -67,7 +68,13 @@ class CameraOpenCV(CameraBase):
+             self.opencvMajorVersion = int(cv2.__version__[0])
+ 
+         self._device = None
++        if 'index' in kwargs:
++            if kwargs['index'] in CameraOpenCV._DEVICE_CACHE:
++                self._device = CameraOpenCV._DEVICE_CACHE[kwargs['index']]
++                Logger.error("Using cached device")
+         super(CameraOpenCV, self).__init__(**kwargs)
++        if self._index not in CameraOpenCV._DEVICE_CACHE:
++            CameraOpenCV._DEVICE_CACHE[self._index] = self._device
+ 
+     def init_camera(self):
+         # consts have changed locations between versions 2 and 3
+@@ -106,12 +113,14 @@ class CameraOpenCV(CameraBase):
+ 
+         elif self.opencvMajorVersion in (2, 3, 4):
+             # create the device
+-            self._device = cv2.VideoCapture(self._index)
+-            # Set preferred resolution
+-            self._device.set(PROPERTY_WIDTH,
+-                             self.resolution[0])
+-            self._device.set(PROPERTY_HEIGHT,
+-                             self.resolution[1])
++            if not self._device:
++                Logger.error("Device Not Cached")
++                self._device = cv2.VideoCapture(self._index)
++                # Set preferred resolution
++                self._device.set(PROPERTY_WIDTH,
++                                self.resolution[0])
++                self._device.set(PROPERTY_HEIGHT,
++                                self.resolution[1])
+             # and get frame to check if it's ok
+             ret, frame = self._device.read()
+ 
