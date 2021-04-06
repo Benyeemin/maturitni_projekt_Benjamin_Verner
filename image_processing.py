@@ -1,5 +1,4 @@
 import cv2, pytesseract
-from pyzbar import pyzbar
 
 def find_books(img_path): #book detection using cv2, currently not used
     try:
@@ -38,16 +37,4 @@ def find_books(img_path): #book detection using cv2, currently not used
                 text = pytesseract.image_to_string(book).split()
                 text_list.append(text)
         return text_list
-    else:
-        return None
-
-def find_barcodes(img_path):
-    try:
-        image = cv2.imread(img_path)
-    except:
-        return None
-    if image is not None:
-        barcodes = pyzbar.decode(image)
-        return barcodes
-    else:
-        return None
+    return None

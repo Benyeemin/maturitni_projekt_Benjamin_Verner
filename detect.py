@@ -60,10 +60,11 @@ def find_books(image_path):
                 book = image[int(coor[1]):int(coor[3]), int(coor[0]):int(coor[2])]
                 not_needed, book = cv2.threshold(book, 127, 255, cv2.THRESH_BINARY)
 
-                text = pytesseract.image_to_string(book).split()
-                if len(text) == 0:
-                    book = cv2.rotate(book, cv2.ROTATE_180)
+                for i in range(4):
                     text = pytesseract.image_to_string(book).split()
+                    if text:
+                        break
+                    book = cv2.rotate(book, cv2.ROTATE_90_CLOCKWISE)
                 text_list.append(text)
         return text_list
     else:

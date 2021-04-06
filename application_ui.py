@@ -1,20 +1,17 @@
-import better_exceptions
-import pytesseract, time, psycopg2, pyzbar, cv2, isbnlib, sys
+import pytesseract, time, sys
 from kivy.app import App
 from kivy.lang import Builder
-from contextlib import closing
-from isbntools.app import *
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.clipboard import Clipboard
-import image_processing
-import information_fetcher
-import detect
-import method1_SQL as sqlsearch
 from pathlib import Path
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.uix.floatlayout import FloatLayout
-from nltk.corpus import wordnet
+import image_processing
+import information_fetcher
+import detect
+import method1_SQL as sqlsearch
+import barcode_finder
 
 if getattr(sys, 'frozen', False):
     TesseractPath = Path(sys._MEIPASS)/'tesseract'/'tesseract.exe'
@@ -187,7 +184,7 @@ class MainScreen(Screen):
     def read_from_barcode(self):
         FinalScreen.output = []
         FinalScreen.book_number = 0
-        barcodes = image_processing.find_barcodes(MainScreen.img_path)
+        barcodes = barcode_finder.find_barcodes(MainScreen.img_path)
         if barcodes is not None:
             for barcode in barcodes:
                 FinalScreen.book_number += 1

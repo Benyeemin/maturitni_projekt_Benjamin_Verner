@@ -7,7 +7,7 @@ def info_from_image(book_title, book_author, book_number):
     if len(book) != 0:
         string = 'Book No.: ' + str(book_number) + '\n' + 'ISBN: ' + book[
             'ISBN-13'] + '\n' + 'Title: ' + \
-                 book['Title'] + '\n' + 'Authors: ' + book['Authors'] + '\n' + 'Publisher: ' + book[
+                 book['Title'] + '\n' + 'Authors: ' + '; '.join(book['Authors']) + '\n' + 'Publisher: ' + book[
                      'Publisher'] + '\n' + 'Year: ' + book['Year'] + '\n' + 'Language: ' + book[
                      'Language']
     else:
@@ -22,7 +22,7 @@ def info_from_barcode(barcode, book_number):
     book = isbnlib.meta(isbn)
     if len(book) != 0:
         string = 'Book No.: ' + str(book_number) + '\n' + 'ISBN: ' + book['ISBN-13'] + '\n' + 'Title: ' + book[
-            'Title'] + '\n' + 'Authors: ' + book['Authors'] + '\n' + 'Publisher: ' + book[
+            'Title'] + '\n' + 'Authors: ' + '; '.join(book['Authors']) + '\n' + 'Publisher: ' + book[
                      'Publisher'] + '\n' + 'Year: ' + book['Year'] + '\n' + 'Language: ' + book['Language']
     else:
         string = 'Database error: BibTex citation for book No. ' + str(book_number) + ' not found. ISBN: ' + isbn

@@ -31,7 +31,10 @@ def search(text):
         return None, None
     with closing(conn.cursor()) as cursor:
         cursor.execute(command)
-        author_key = cursor.fetchone()['key']
+        try:
+            author_key = cursor.fetchone()['key']
+        except:
+            author_key = '123'
 
     for word in text:
         if not wordnet.synsets(word):
