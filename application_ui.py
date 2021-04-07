@@ -165,14 +165,17 @@ class MainScreen(Screen):
             for text in text_list:
                 if len(text) > 0:
                     FinalScreen.book_number += 1
-                    book_title, book_author = sqlsearch.search(text)
-                    if book_title is not None:
-                        string = information_fetcher.info_from_image(book_title, book_author, FinalScreen.book_number)
-                        FinalScreen.output.append('\n' + string)
-                    else:
+                    try:
+                        book_title, book_author = sqlsearch.search(text)
+                    except:
                         FinalScreen.output.append('Server connection error: check your internet connection.')
                         self.final_screen.ids.output.text = FinalScreen.output[0]
                         return
+                    if book_title is not None:
+                        string = information_fetcher.info_from_image(book_title, book_author, FinalScreen.book_number)
+                        FinalScreen.output.append(string)
+                    else:
+                        FinalScreen.output.append(f'Error, book No. {FinalScreen.book_number} not found in the database.')
             if FinalScreen.book_number == 0:
                 FinalScreen.output.append('0 books found.')
         else:
