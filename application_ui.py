@@ -45,20 +45,20 @@ Builder.load_string('''
                 root.read_from_barcode()
                 root.manager.current = 'FinalScreen'
         Button:
-            text: 'select image'
+            text: 'Select image'
             size_hint_y: None
             height: '48dp'
             on_release:
                 root.show_load()
         Button:
-            text: 'read from selected image'
+            text: 'Read from selected image'
             size_hint_y: None
             height: '48dp'
             on_release:
                 root.read_from_image()
                 root.manager.current = 'FinalScreen'
         Button:
-            text: 'scan barcodes from selected image'
+            text: 'Scan barcodes from selected image'
             size_hint_y: None
             height: '48dp'
             on_release:
@@ -111,12 +111,12 @@ Builder.load_string('''
             on_release: app.stop()
     BoxLayout:
         Button:
-            text: 'previous book'
+            text: 'Previous book'
             size_hint_y: None
             height: '48dp'
             on_release: root.previous_book()
         Button:
-            text: 'next book'
+            text: 'Next book'
             size_hint_y: None
             height: '48dp'
             on_release: root.next_book()
