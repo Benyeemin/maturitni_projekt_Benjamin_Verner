@@ -3,12 +3,9 @@ from contextlib import closing
 from pathlib import Path
 from psycopg2.extras import DictCursor
 
-def build_search_sql(text, column, table, max_title_len = None):
+def build_search_sql(text, column, table):
     cases = [f"case when {column} ilike '%{word}%' then 1 else 0 end" for word in text]
-    if max_title_len:
-        union = [f"select * from {table} where {column} ilike '%{word}%' and char_length({column}) < {max_title_len}" for word in text]
-    else:
-        union = [f"select * from {table} where {column} ilike '%{word}%'" for word in text]
+    union = [f"select * from {table} where {column} ilike '%{word}%'" for word in text]
     return [' + '.join(cases), ' union all '.join(union)]
 
 def search(text):
@@ -39,9 +36,9 @@ def search(text):
         except:
             author_key = '123'
 
-    cases, union = build_search_sql(text, 'title', 'authors', max_title_len)
+    cases, union = build_search_sql(text, 'title', 'authors')
     command = f'''select title, main_author, {cases} + case when main_author='{author_key}' then {str(max(
-        len(text) // 3, 1))} else 0 end as words from ({union}) order by words desc limit 1;'''
+        len(text) // 3, 1))} else 0 end as words from ({union}) as books  where char_length(title) < {max_title_len} order by words desc limit 1;'''
 
     with closing(conn.cursor()) as cursor:
         cursor.execute(command)
