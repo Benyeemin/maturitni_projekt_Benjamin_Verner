@@ -26,7 +26,7 @@ def search(text):
     server_info = json.loads(open(str(server_info_path)).readline())
 
     cases, union = build_search_sql(text, 'name', 'authors')
-    command = f'select key, {cases} as words from ({union}) order by words desc limit 1;'
+    command = f'select key, {cases} as words from ({union}) as books order by words desc limit 1;'
     conn = psycopg2.connect(host=server_info["host"], user=server_info["user"], password=server_info["password"],
                                 database=server_info["database"], sslmode='require', cursor_factory=DictCursor)
     with closing(conn.cursor()) as cursor:
