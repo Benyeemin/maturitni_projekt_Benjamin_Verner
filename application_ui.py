@@ -167,8 +167,8 @@ class MainScreen(Screen):
                     FinalScreen.book_number += 1
                     try:
                         book_title, book_author = sqlsearch.search(text)
-                    except:
-                        FinalScreen.output.append('Server connection error: check your internet connection.')
+                    except Exception as ex:
+                        FinalScreen.output.append(f'Server connection error: check your internet connection. ({ex})')
                         self.final_screen.ids.output.text = FinalScreen.output[0]
                         return
                     if book_title is not None:

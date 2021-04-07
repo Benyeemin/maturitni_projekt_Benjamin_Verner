@@ -69,7 +69,7 @@ def find_books(image_path):
                 coor[2] = int(coor[2] * image_h)
                 coor[1] = int(coor[1] * image_w)
                 coor[3] = int(coor[3] * image_w)
-                book = image[int(coor[1]):int(coor[3]), int(coor[0]):int(coor[2])]
+                book = image[int(coor[0]):int(coor[2]), int(coor[1]):int(coor[3])]
                 not_needed, book = cv2.threshold(book, 127, 255, cv2.THRESH_BINARY)
 
                 for i in range(4):
